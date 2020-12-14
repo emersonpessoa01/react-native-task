@@ -10,7 +10,7 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import TaskList from "./src/components/TaskLIst";
+import TaskList from "./src/components/TaskList";
 import * as Animatable from "react-native-animatable"
 
 const AnimatedBtn = Animatable.createAnimatableComponent(TouchableOpacity)
