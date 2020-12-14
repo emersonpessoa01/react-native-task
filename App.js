@@ -107,7 +107,6 @@ export default function App() {
             useNativeDriver
           >
             <TextInput
-              onFocus={true}
               multiline={true}
               placeholderTextColor="#747474"
               autoCorrect={false}
@@ -187,7 +186,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   input: {
-    fontsize: 15,
+    fontSize: 15,
     marginLeft: 10,
     marginRight: 10,
     marginTop: 30,
