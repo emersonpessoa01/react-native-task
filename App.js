@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,23 +8,66 @@ import {
   TouchableOpacity,
   FlatList,
   Modal,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import TaskList from "./src/components/TaskList";
-import * as Animatable from "react-native-animatable"
+import * as Animatable from "react-native-animatable";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const AnimatedBtn = Animatable.createAnimatableComponent(TouchableOpacity)
+const AnimatedBtn = Animatable.createAnimatableComponent(TouchableOpacity);
 
 export default function App() {
-  const [task, setTask] = useState([
-    { key: 1, task: "Comprar pão" },
-    { key: 1, task: "Estudar React-Native" },
-    { key: 1, task: "Ir na academia hoje a noite" },
-    { key: 1, task: "Comprar Coca-cola" },
-    { key: 1, task: "Assistir ao vídeo do sujetio" },
-  ]);
+  const [task, setTask] = useState([]);
 
-  const[open,setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+
+  //buscando todas as tarefas ao iniciar o app
+  useEffect(()=>{
+    const loadTasks =async()=>{
+      const taskStorage = await AsyncStorage.getItem("@task")
+
+      if(taskStorage){
+        setTask(JSON.parse(taskStorage))
+      }
+    }
+
+    
+    loadTasks()
+  },[])
+
+//salvando caaso tenha alguma tarefa alterada
+  useEffect(()=>{
+    const saveTask =async()=>{
+      await AsyncStorage.setItem("@task", JSON.stringify(task))
+    }
+
+    saveTask()
+
+  },[task])
+
+  const handleAdd = () => {
+    if (input === "") {
+      return;
+    }
+    const data = {
+      key: input,
+      task: input,
+    };
+
+    setTask([...task, data]);
+    setOpen(false);
+    setInput("");
+  };
+
+  // const handleDelete =(data)=>{
+  //  alert(data)
+  // }
+  const handleDelete = useCallback((data) => {
+    const find = task.filter((r) => r.key !== data.key);
+    setTask(find);
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -38,23 +81,55 @@ export default function App() {
         showsHorizontalScrollIndicator={false}
         data={task}
         keyExtractor={(item) => String(item.key)}
-        renderItem={({ item }) => <TaskList data={item} />}
+        renderItem={({ item }) => (
+          <TaskList data={item} handleDelete={handleDelete} />
+        )}
       />
 
-
       <Modal animationType="slide" transparent={false} visible={open}>
-        <SafeAreaView>
-          <Text>Modal</Text>
+        <SafeAreaView style={styles.modal}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setOpen(false)}>
+              <Ionicons
+                style={{ marginLeft: 5, marginRight: 5 }}
+                name="md-arrow-back"
+                size={40}
+                color="#fff"
+              />
+            </TouchableOpacity>
+
+            <Text style={styles.modalTitle}>Novas tarefas</Text>
+          </View>
+
+          <Animatable.View
+            style={styles.modalBody}
+            animation="fadeInUp"
+            useNativeDriver
+          >
+            <TextInput
+              onFocus={true}
+              multiline={true}
+              placeholderTextColor="#747474"
+              autoCorrect={false}
+              placeholder="O que precisa fazer hoje?"
+              style={styles.input}
+              value={input}
+              onChangeText={(texto) => setInput(texto)}
+            />
+
+            <TouchableOpacity style={styles.handleAdd} onPress={handleAdd}>
+              <Text style={styles.handleTextAdd}>Cadastrar</Text>
+            </TouchableOpacity>
+          </Animatable.View>
         </SafeAreaView>
       </Modal>
 
-      <AnimatedBtn 
-      style={styles.fab}
-      useNativeDriver
-      animation="bounceInUp"
-      duration={1500}
-      onPress={()=> setOpen(true)}
-
+      <AnimatedBtn
+        style={styles.fab}
+        useNativeDriver
+        animation="bounceInUp"
+        duration={1500}
+        onPress={() => setOpen(true)}
       >
         <Ionicons name="ios-add" size={35} color="#fff" />
       </AnimatedBtn>
@@ -92,5 +167,48 @@ const styles = StyleSheet.create({
       width: 1,
       height: 3,
     },
+  },
+  modal: {
+    flex: 1,
+    backgroundColor: "#171431",
+  },
+  modalHeader: {
+    marginLeft: 10,
+    marginRight: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  modalTitle: {
+    marginLeft: 15,
+    fontSize: 23,
+    color: "#fff",
+  },
+  modalBody: {
+    marginTop: 15,
+  },
+  input: {
+    fontsize: 15,
+    marginLeft: 10,
+    marginRight: 10,
+    marginTop: 30,
+    backgroundColor: "#fff",
+    padding: 9,
+    height: 85,
+    textAlignVertical: "top",
+    color: "#000",
+    borderRadius: 5,
+  },
+  handleAdd: {
+    backgroundColor: "#fff",
+    marginTop: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 10,
+    marginRight: 10,
+    height: 40,
+    borderRadius: 5,
+  },
+  handleTextAdd: {
+    fontSize: 20,
   },
 });
